@@ -21,25 +21,13 @@ sequenceDiagram
 
 ## At a glance
 
-- **What you get:** `aws sts get-caller-identity --profile myhost` works for
-  `alice` on `myhost`, with credentials from a 5-minute certificate the
-  machine issues to `alice`.
-- **Trust:** AWS holds the CA certificate itself. Nothing on the machine is
-  reachable from outside, and AWS never contacts it.
-- **CA key:** ECDSA P-256, generated in the TPM2 and usable only under the
-  machine's own Secure Boot state (PCR 7).
-- **CA replacement:** by hand. A new CA, after a Secure Boot key or dbx
-  update or a TPM2 clear, is registered with AWS before certificates are
-  issued again.
-- **Requirements:** NixOS 26.05 or later, a TPM 2.0 with Secure Boot, an AWS
-  account, OpenTofu or Terraform.
-- **Setup:**
-  1. Add the flake and its NixOS module.
-  2. Enable it and deploy: the machine generates its CA.
-  3. Copy the CA certificate into your configuration.
-  4. Create the trust anchor, profile and roles with `terraform/aws`, and
-     deploy again.
-  5. Point an AWS profile at it.
+- **You get:** `aws sts get-caller-identity --profile myhost` working for `alice` on `myhost`.
+- **Credential:** a 5-minute certificate for `myhost:alice` and its throwaway key.
+- **Trust:** an AWS trust anchor holds the CA certificate; AWS never contacts the machine.
+- **CA key:** ECDSA P-256 in the TPM2, signing only under the machine's Secure Boot state (PCR 7).
+- **New CA:** registered by hand, after a Secure Boot key or dbx update or a TPM2 clear.
+- **Requirements:** NixOS 26.05 or later, TPM 2.0 with Secure Boot, an AWS account, OpenTofu or Terraform.
+- **Setup:** add the module → deploy → copy the CA certificate → apply `terraform/aws` → deploy → add an AWS profile.
 
 ## Setup
 
@@ -204,9 +192,9 @@ sequenceDiagram
 
 ## Layout
 
-| Path             | What it is                                                                                    |
-| ---------------- | --------------------------------------------------------------------------------------------- |
+| Path             | What it is                                                                                      |
+| ---------------- | ----------------------------------------------------------------------------------------------- |
 | `package/`       | `rolesanywhere` (the CA and the issuer) and `rolesanywhere-credentials` (the client), in Python |
-| `module.nix`     | the NixOS module, `services.rolesanywhere`                                                    |
-| `terraform/aws/` | the trust anchor, the profile, and the roles that trust its certificates                      |
-| `tests/vm.nix`   | a NixOS VM test on an emulated TPM2                                                           |
+| `module.nix`     | the NixOS module, `services.rolesanywhere`                                                      |
+| `terraform/aws/` | the trust anchor, the profile, and the roles that trust its certificates                        |
+| `tests/vm.nix`   | a NixOS VM test on an emulated TPM2                                                             |
